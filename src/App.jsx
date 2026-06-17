@@ -1,35 +1,104 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { ThemeProvider } from "./hooks/useTheme";
+import { LangProvider, useLang } from "./hooks/useLang";
+import SettingsPanel from "./components/SettingsPanel";
+import SoloLeaderboard from "./components/SoloLeaderboard";
+import TeamsLeaderboard from "./components/TeamsLeaderboard";
+import AllTime from "./components/AllTime";
+import data from "./data/seasons.json";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function GearIcon() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  );
 }
 
-export default App
+function InstagramIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}
+
+function TikTokIcon() {
+  return (
+    <svg width="20" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/>
+    </svg>
+  );
+}
+
+function Inner() {
+  const { t } = useLang();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tab, setTab] = useState("alltime");
+  const seasons = data.seasons;
+  const active = seasons.find(s => s.id === tab);
+
+  return (
+    <div className="app">
+      <header className="header">
+        <img src="/logo.png" alt="The Last Survivor" className="header-logo" />
+        <button className="gear-btn" onClick={() => setSettingsOpen(true)} aria-label={t("settings")}>
+          <GearIcon />
+        </button>
+      </header>
+
+      <nav className="nav">
+        {seasons.map(s => (
+          <button key={s.id} className={`nav-tab ${tab===s.id?"active":""}`} onClick={() => setTab(s.id)}>
+            {s.label}
+            <span className="nav-sub">{s.type==="solo" ? t("soloEvent") : t("teamsEvent")}</span>
+          </button>
+        ))}
+        <button className={`nav-tab ${tab==="alltime"?"active":""}`} onClick={() => setTab("alltime")} style={{marginLeft:"auto"}}>
+          {t("allTime")}
+        </button>
+      </nav>
+
+      <main className="main">
+        {tab === "alltime"
+          ? <AllTime seasons={seasons} />
+          : active?.type === "solo"
+            ? <SoloLeaderboard season={active} />
+            : <TeamsLeaderboard season={active} />
+        }
+      </main>
+
+      <footer className="footer">
+        <p className="footer-text">{t("footer")}</p>
+        <div className="footer-socials">
+          <a href="https://instagram.com/tls.thelastsurvivor" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Instagram">
+            <InstagramIcon />
+          </a>
+          <a href="https://tiktok.com/@tls.thelastsurvivor" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="TikTok">
+            <TikTokIcon />
+          </a>
+        </div>
+        <p className="footer-copy">© 2024 – 2026 · The Last Survivor</p>
+        <p className="footer-disclaimer">
+          The Last Survivor não é afiliado, associado ou de qualquer forma ligado à Mojang Studios ou Microsoft Corporation. Minecraft® é uma marca registada da Mojang Synergies AB.
+        </p>
+      </footer>
+
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <LangProvider>
+        <Inner />
+      </LangProvider>
+    </ThemeProvider>
+  );
+}
